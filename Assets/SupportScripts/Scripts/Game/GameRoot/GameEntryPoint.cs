@@ -36,6 +36,11 @@ namespace SupportScripts.Scripts
             {
                 _coroutines.StartCoroutine(LoadAndStartGameplay());
                 return;
+            } 
+            if(sceneName == Scenes.MAIN_MENU)
+            {
+                _coroutines.StartCoroutine(LoadAndStartMainMenu());
+                return;
             }
 
             if (sceneName != Scenes.BOOT)
@@ -56,7 +61,33 @@ namespace SupportScripts.Scripts
             yield return new WaitForSeconds(1);
 
             var sceneEntryPoint = Object.FindFirstObjectByType<GameplayEntryPoint>();
-            sceneEntryPoint.Run();
+            sceneEntryPoint.Run(_uiRoot);
+
+            sceneEntryPoint.GoToMainMenuSceneRequested += () =>
+            {
+                _coroutines.StartCoroutine(LoadAndStartMainMenu());
+            };
+
+            _uiRoot.HideLoadingsScreen();
+        }
+
+            private IEnumerator LoadAndStartMainMenu()
+        {
+            _uiRoot.ShowLoadingsScreen();
+
+            //Сначала загружаеться пустая сцена чтобы точно удалить предыдущую 
+            yield return LoadScene(Scenes.BOOT);
+            yield return LoadScene(Scenes.MAIN_MENU);
+
+            yield return new WaitForSeconds(2);
+
+            var sceneEntryPoint = Object.FindFirstObjectByType<MainMenuEntryPoint>();
+            sceneEntryPoint.Run(_uiRoot);
+
+            sceneEntryPoint.GoToGameplaySceneRequested += () =>
+            {
+                _coroutines.StartCoroutine(LoadAndStartGameplay());
+            };
 
             _uiRoot.HideLoadingsScreen();
         }
