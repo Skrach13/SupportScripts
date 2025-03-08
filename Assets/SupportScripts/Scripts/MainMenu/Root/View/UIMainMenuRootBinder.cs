@@ -1,12 +1,16 @@
-using System;
+using R3;
 using UnityEngine;
 
 public class UIMainMenuRootBinder : MonoBehaviour
 {
-    public event Action GoToGameplayButtonClicked;
-
+    private Subject<Unit> _exitSceneSignalSubj;
     public void HandleGoToGameplayButtonLick()
     {
-        GoToGameplayButtonClicked?.Invoke();
+        _exitSceneSignalSubj?.OnNext(Unit.Default);
+    }
+
+    public void Bind(Subject<Unit> exitSceneSignalSubj)
+    {
+        _exitSceneSignalSubj = exitSceneSignalSubj;
     }
 }
