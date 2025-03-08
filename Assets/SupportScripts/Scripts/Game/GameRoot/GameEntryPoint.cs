@@ -1,100 +1,102 @@
-using SupportScripts.Scripts.Gameplay;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using R3;
 
-namespace SupportScripts.Scripts
+
+
+public class GameEntryPoint
 {
-    public class GameEntryPoint 
+    private static GameEntryPoint _instance;
+    private Coroutines _coroutines;
+    private UIRootView _uiRoot;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    public static void AutoStartGame()
     {
-        private static GameEntryPoint _instance;
-        private Coroutines _coroutines;
-        private UIRootView _uiRoot;
+        _instance = new GameEntryPoint();
+        _instance.RunGame();
+    }
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        public static void AutoStartGame()
-        {
-            _instance = new GameEntryPoint();
-            _instance.RunGame();
-        }
+    private GameEntryPoint()
+    {
+        _coroutines = new GameObject("COROUTINES").AddComponent<Coroutines>();
+        Object.DontDestroyOnLoad(_coroutines.gameObject);
 
-        private GameEntryPoint()
-        {
-            _coroutines = new GameObject ("COROUTINES").AddComponent<Coroutines>();
-            Object.DontDestroyOnLoad(_coroutines.gameObject);
-
-            var prefabUIRoot = Resources.Load<UIRootView>("UIRoot");
-            _uiRoot = Object.Instantiate(prefabUIRoot);
-            Object.DontDestroyOnLoad(_uiRoot.gameObject);
-        }
-        private void RunGame()
-        {
+        var prefabUIRoot = Resources.Load<UIRootView>("UIRoot");
+        _uiRoot = Object.Instantiate(prefabUIRoot);
+        Object.DontDestroyOnLoad(_uiRoot.gameObject);
+    }
+    private void RunGame()
+    {
 #if UNITY_EDITOR
-            var sceneName = SceneManager.GetActiveScene ().name;
+        var sceneName = SceneManager.GetActiveScene().name;
 
-            if(sceneName == Scenes.GAMEPLAY)
-            {
-                _coroutines.StartCoroutine(LoadAndStartGameplay());
-                return;
-            } 
-            if(sceneName == Scenes.MAIN_MENU)
-            {
-                _coroutines.StartCoroutine(LoadAndStartMainMenu());
-                return;
-            }
+        if (sceneName == Scenes.GAMEPLAY)
+        {
+            var enterParams = new GameplayEnterParams("save.asd", 1);
+            _coroutines.StartCoroutine(LoadAndStartGameplay(enterParams));
+            return;
+        }
+        if (sceneName == Scenes.MAIN_MENU)
+        {
+            _coroutines.StartCoroutine(LoadAndStartMainMenu());
+            return;
+        }
 
-            if (sceneName != Scenes.BOOT)
-            {
-                return ;
-            }
+        if (sceneName != Scenes.BOOT)
+        {
+            return;
+        }
 #endif
-            _coroutines.StartCoroutine(LoadAndStartGameplay());
-        }
+        _coroutines.StartCoroutine(LoadAndStartMainMenu());
+    }
 
-        private IEnumerator LoadAndStartGameplay()
+    private IEnumerator LoadAndStartGameplay(GameplayEnterParams enterParams)
+    {
+        _uiRoot.ShowLoadingsScreen();
+        //Сначала загружаеться пустая сцена чтобы точно удалить предыдущую 
+        yield return LoadScene(Scenes.BOOT);
+        yield return LoadScene(Scenes.GAMEPLAY);
+
+        yield return new WaitForSeconds(1);
+
+        var sceneEntryPoint = Object.FindFirstObjectByType<GameplayEntryPoint>();
+
+        sceneEntryPoint.Run(_uiRoot, enterParams).Subscribe(gameplayExitParams =>
         {
-            _uiRoot.ShowLoadingsScreen();
-            //Сначала загружаеться пустая сцена чтобы точно удалить предыдущую 
-            yield return LoadScene(Scenes.BOOT);
-            yield return LoadScene(Scenes.GAMEPLAY);
+            _coroutines.StartCoroutine(LoadAndStartMainMenu(gameplayExitParams.MainMenuEnterParams));
+        });
 
-            yield return new WaitForSeconds(1);
+        _uiRoot.HideLoadingsScreen();
+    }
 
-            var sceneEntryPoint = Object.FindFirstObjectByType<GameplayEntryPoint>();
-            sceneEntryPoint.Run(_uiRoot);
+    private IEnumerator LoadAndStartMainMenu(MainMenuEnterParams enterParams = null)
+    {
+        _uiRoot.ShowLoadingsScreen();
 
-            sceneEntryPoint.GoToMainMenuSceneRequested += () =>
+        //Сначала загружаеться пустая сцена чтобы точно удалить предыдущую 
+        yield return LoadScene(Scenes.BOOT);
+        yield return LoadScene(Scenes.MAIN_MENU);
+
+        yield return new WaitForSeconds(1);
+
+        var sceneEntryPoint = Object.FindFirstObjectByType<MainMenuEntryPoint>();
+        sceneEntryPoint.Run(_uiRoot, enterParams).Subscribe(mainMenuExitParams =>
+        {
+            var targetSceneName = mainMenuExitParams.TargetSceneEnterParams.SceneName;
+            if (targetSceneName == Scenes.GAMEPLAY)
             {
-                _coroutines.StartCoroutine(LoadAndStartMainMenu());
-            };
+                _coroutines.StartCoroutine(LoadAndStartGameplay(mainMenuExitParams.TargetSceneEnterParams.As<GameplayEnterParams>()));
+            }
+        });
 
-            _uiRoot.HideLoadingsScreen();
-        }
+        _uiRoot.HideLoadingsScreen();
+    }
 
-            private IEnumerator LoadAndStartMainMenu()
-        {
-            _uiRoot.ShowLoadingsScreen();
-
-            //Сначала загружаеться пустая сцена чтобы точно удалить предыдущую 
-            yield return LoadScene(Scenes.BOOT);
-            yield return LoadScene(Scenes.MAIN_MENU);
-
-            yield return new WaitForSeconds(2);
-
-            var sceneEntryPoint = Object.FindFirstObjectByType<MainMenuEntryPoint>();
-            sceneEntryPoint.Run(_uiRoot);
-
-            sceneEntryPoint.GoToGameplaySceneRequested += () =>
-            {
-                _coroutines.StartCoroutine(LoadAndStartGameplay());
-            };
-
-            _uiRoot.HideLoadingsScreen();
-        }
-
-        private IEnumerator LoadScene(string sceneName)
-        {
-            yield return SceneManager.LoadSceneAsync(sceneName);
-        }
+    private IEnumerator LoadScene(string sceneName)
+    {
+        yield return SceneManager.LoadSceneAsync(sceneName);
     }
 }
+

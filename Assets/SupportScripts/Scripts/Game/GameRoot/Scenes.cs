@@ -1,5 +1,3 @@
-namespace SupportScripts.Scripts
-{
 
     public static class Scenes
     {
@@ -7,4 +5,4 @@ namespace SupportScripts.Scripts
         public const string MAIN_MENU = "MainMenu";
         public const string GAMEPLAY = "Gameplay";
     }
-}
+
