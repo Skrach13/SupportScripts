@@ -1,3 +1,4 @@
+using DI;
 using R3;
 using UnityEngine;
 
@@ -7,8 +8,20 @@ public class MainMenuEntryPoint : MonoBehaviour
 
     [SerializeField] private UIMainMenuRootBinder _sceneUIRootPrefab;
 
-    public Observable<MainMenuExitParams> Run(UIRootView uiRoot, MainMenuEnterParams enterParams)
+    public Observable<MainMenuExitParams> Run(DIContainer mainMenuContainer, MainMenuEnterParams enterParams)
     {
+        MainMenuRegestration.Register(mainMenuContainer, enterParams);
+        var mainMenuViewModelsContainer = new DIContainer(mainMenuContainer);
+        MainMenuViewModelRegistration.Register(mainMenuViewModelsContainer);
+
+        ///
+
+
+        //TEST
+        mainMenuViewModelsContainer.Resolve<UIMainMenuRootViewModel>();
+        //
+
+        var uiRoot = mainMenuContainer.Resolve<UIRootView>();
         var uiScene = Instantiate(_sceneUIRootPrefab);
         uiRoot.AttachSceneUI(uiScene.gameObject);
 
