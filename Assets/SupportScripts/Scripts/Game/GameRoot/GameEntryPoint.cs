@@ -2,14 +2,15 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using R3;
-
-
+using DI;
 
 public class GameEntryPoint
 {
     private static GameEntryPoint _instance;
     private Coroutines _coroutines;
     private UIRootView _uiRoot;
+    private readonly DIContainer _rootContainer = new();
+    private DIContainer _cachedSceneContainer;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     public static void AutoStartGame()
@@ -26,6 +27,10 @@ public class GameEntryPoint
         var prefabUIRoot = Resources.Load<UIRootView>("UIRoot");
         _uiRoot = Object.Instantiate(prefabUIRoot);
         Object.DontDestroyOnLoad(_uiRoot.gameObject);
+        _rootContainer.RegisterInstance(_uiRoot);
+
+        //какойто тестовый сервис ( зачем оно надо пока хз)TODO
+        _rootContainer.RegisterFactory(_ => new SomeCommonService()).AsSingle();
     }
     private void RunGame()
     {
@@ -55,6 +60,8 @@ public class GameEntryPoint
     private IEnumerator LoadAndStartGameplay(GameplayEnterParams enterParams)
     {
         _uiRoot.ShowLoadingsScreen();
+        _cachedSceneContainer?.Dispose();
+
         //Сначала загружаеться пустая сцена чтобы точно удалить предыдущую 
         yield return LoadScene(Scenes.BOOT);
         yield return LoadScene(Scenes.GAMEPLAY);
@@ -62,8 +69,9 @@ public class GameEntryPoint
         yield return new WaitForSeconds(1);
 
         var sceneEntryPoint = Object.FindFirstObjectByType<GameplayEntryPoint>();
+        var gameplayContainer = _cachedSceneContainer = new DIContainer(_rootContainer);
 
-        sceneEntryPoint.Run(_uiRoot, enterParams).Subscribe(gameplayExitParams =>
+        sceneEntryPoint.Run(gameplayContainer, enterParams).Subscribe(gameplayExitParams =>
         {
             _coroutines.StartCoroutine(LoadAndStartMainMenu(gameplayExitParams.MainMenuEnterParams));
         });
@@ -74,6 +82,7 @@ public class GameEntryPoint
     private IEnumerator LoadAndStartMainMenu(MainMenuEnterParams enterParams = null)
     {
         _uiRoot.ShowLoadingsScreen();
+        _cachedSceneContainer?.Dispose();
 
         //Сначала загружаеться пустая сцена чтобы точно удалить предыдущую 
         yield return LoadScene(Scenes.BOOT);
@@ -82,7 +91,9 @@ public class GameEntryPoint
         yield return new WaitForSeconds(1);
 
         var sceneEntryPoint = Object.FindFirstObjectByType<MainMenuEntryPoint>();
-        sceneEntryPoint.Run(_uiRoot, enterParams).Subscribe(mainMenuExitParams =>
+        var MainMenuContainer = _cachedSceneContainer = new DIContainer(_rootContainer);
+
+        sceneEntryPoint.Run(MainMenuContainer, enterParams).Subscribe(mainMenuExitParams =>
         {
             var targetSceneName = mainMenuExitParams.TargetSceneEnterParams.SceneName;
             if (targetSceneName == Scenes.GAMEPLAY)

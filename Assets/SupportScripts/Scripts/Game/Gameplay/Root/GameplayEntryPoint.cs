@@ -1,3 +1,4 @@
+using DI;
 using R3;
 using UnityEngine;
 
@@ -5,8 +6,20 @@ public class GameplayEntryPoint : MonoBehaviour
 {
     [SerializeField] private UIGameplayRootBinder _sceneUIRootPrefab;
 
-    public Observable<GameplayExitParams> Run(UIRootView uiRoot, GameplayEnterParams enterParams)
+    public Observable<GameplayExitParams> Run(DIContainer gameplayContainer, GameplayEnterParams enterParams)
     {
+        GameplayRegestration.Register(gameplayContainer, enterParams);
+        var gameplayViewModelsContainer = new DIContainer(gameplayContainer);
+        GameplayViewModelRegistration.Register(gameplayViewModelsContainer);
+
+        ///
+
+
+        //TEST
+        gameplayViewModelsContainer.Resolve<UIGameplayRootViewModel>();
+        //
+
+        var uiRoot = gameplayContainer.Resolve<UIRootView>();
         var uiScene = Instantiate(_sceneUIRootPrefab);
         uiRoot.AttachSceneUI(uiScene.gameObject);
 
