@@ -1,4 +1,5 @@
 using DI;
+using ObservableCollections;
 using R3;
 using UnityEngine;
 
@@ -12,11 +13,33 @@ public class GameplayEntryPoint : MonoBehaviour
         var gameplayViewModelsContainer = new DIContainer(gameplayContainer);
         GameplayViewModelRegistration.Register(gameplayViewModelsContainer);
 
+        var gameStateProvider = gameplayContainer.Resolve<IGameStateProvider>();
+
+        ///
+        ///
+        gameStateProvider.GameState.Buildings.ObserveAdd().Subscribe(e => {
+            
+            var building = e.Value;
+            Debug.Log("Building placed. Type id: " +
+                building.TypeId
+                + " Id: " + building.Id
+                + ", Position: " + building.Position.Value);
+
+        });
+        //TEST
+
+        var cmd = new CommandProcessor(gameStateProvider);
+
+        cmd.RegisterHandler(new CmdPlaceBuildingHandler(gameStateProvider.GameState));
+
+        ///
+        cmd.Proceess(new CmdPlaceBuilding("Васян", GetRandomPosition()));
+        cmd.Proceess(new CmdPlaceBuilding("Dasd", GetRandomPosition()));
+        cmd.Proceess(new CmdPlaceBuilding("Skrach", GetRandomPosition()));
         ///
 
-
-        //TEST
         gameplayViewModelsContainer.Resolve<UIGameplayRootViewModel>();
+        gameplayViewModelsContainer.Resolve<WorldGameplayRootViewModel>();
         //
 
         var uiRoot = gameplayContainer.Resolve<UIRootView>();
@@ -33,5 +56,13 @@ public class GameplayEntryPoint : MonoBehaviour
         var exitToMainMenuSceneSignal = exitSceneSignalSubj.Select(_ => exitParams);
 
         return exitToMainMenuSceneSignal;
+    }
+
+    private Vector3Int GetRandomPosition()
+    {
+        var rX = Random.Range(-10, 10);
+        var rY = Random.Range(-10, 10);
+        var rPosition = new Vector3Int(rX, rY, 0);
+        return rPosition;
     }
 }
