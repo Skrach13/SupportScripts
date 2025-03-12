@@ -15,17 +15,19 @@ public class SomeGameplayService : IDisposable
         _someCommonService = someCommonService;
         Debug.Log(GetType().Name + "has been created");
 
-        gameState.Buildings.ForEach(b => Debug.Log($"Building: {b.TypeId}"));
-        gameState.Buildings.ObserveAdd().Subscribe(e => Debug.Log($"Building add: {e.Value.TypeId}"));
-        gameState.Buildings.ObserveRemove().Subscribe(e => Debug.Log($"Building removed: {e.Value.TypeId}"));
 
-        //Test TODO
-        AddBuilding("Афсян");
-        AddBuilding("Атасян");
-        AddBuilding("Атукун");
 
-        RemoveBuilding("Атасян");
-        //
+        //gameState.Buildings.ForEach(b => Debug.Log($"Building: {b.TypeId}"));
+        //gameState.Buildings.ObserveAdd().Subscribe(e => Debug.Log($"Building add: {e.Value.TypeId}"));
+        //gameState.Buildings.ObserveRemove().Subscribe(e => Debug.Log($"Building removed: {e.Value.TypeId}"));
+
+        ////Test TODO
+        //AddBuilding("Афсян");
+        //AddBuilding("Атасян");
+        //AddBuilding("Атукун");
+
+        //RemoveBuilding("Атасян");
+        ////
     }
 
     public void Dispose()
