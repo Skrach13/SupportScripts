@@ -28,16 +28,12 @@ public class GameplayEntryPoint : MonoBehaviour
         });
         //TEST
 
-        var cmd = new CommandProcessor(gameStateProvider);
+        var buildingsService = gameplayContainer.Resolve<BuildingService>();
 
-        cmd.RegisterHandler(new CmdPlaceBuildingHandler(gameStateProvider.GameState));
-
-        ///
-        cmd.Proceess(new CmdPlaceBuilding("Васян", GetRandomPosition()));
-        cmd.Proceess(new CmdPlaceBuilding("Dasd", GetRandomPosition()));
-        cmd.Proceess(new CmdPlaceBuilding("Skrach", GetRandomPosition()));
-        ///
-
+        buildingsService.PlaceBuilding("Васян", GetRandomPosition());
+        buildingsService.PlaceBuilding("Dasd", GetRandomPosition());
+        buildingsService.PlaceBuilding("Skrach", GetRandomPosition());
+        
         gameplayViewModelsContainer.Resolve<UIGameplayRootViewModel>();
         gameplayViewModelsContainer.Resolve<WorldGameplayRootViewModel>();
         //

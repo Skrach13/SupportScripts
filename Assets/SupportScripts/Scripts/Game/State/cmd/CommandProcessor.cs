@@ -14,7 +14,7 @@ public class CommandProcessor : ICommandProcessor
     {
         _hendlesMap[typeof(TCommand)] = handler;
     }
-    public bool Proceess<TCommand>(TCommand command) where TCommand : ICommand
+    public bool Process<TCommand>(TCommand command) where TCommand : ICommand
     {
         if(_hendlesMap.TryGetValue(typeof(TCommand), out var handler))
         {
