@@ -6,6 +6,7 @@ using UnityEngine;
 public class GameplayEntryPoint : MonoBehaviour
 {
     [SerializeField] private UIGameplayRootBinder _sceneUIRootPrefab;
+    [SerializeField] private WorldGameplayRootBinder _worldRootBinder; 
 
     public Observable<GameplayExitParams> Run(DIContainer gameplayContainer, GameplayEnterParams enterParams)
     {
@@ -33,9 +34,12 @@ public class GameplayEntryPoint : MonoBehaviour
         buildingsService.PlaceBuilding("Васян", GetRandomPosition());
         buildingsService.PlaceBuilding("Dasd", GetRandomPosition());
         buildingsService.PlaceBuilding("Skrach", GetRandomPosition());
-        
+
+        ///
+        _worldRootBinder.Bind(gameplayViewModelsContainer.Resolve<WorldGameplayRootViewModel>());
+
         gameplayViewModelsContainer.Resolve<UIGameplayRootViewModel>();
-        gameplayViewModelsContainer.Resolve<WorldGameplayRootViewModel>();
+       
         //
 
         var uiRoot = gameplayContainer.Resolve<UIRootView>();
